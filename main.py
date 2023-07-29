@@ -2,38 +2,74 @@ import pandas as pd
 import numpy as np
 from party import Party
 from miner import Miner
-from utils import split_data
+from utils import split_data, generation, processing_data
 
-num_parties = 3
+num_parties = 10
 np.random.seed(10)
-train_df = pd.read_csv('train.csv')
+raw_df = pd.read_csv('train.csv')
+train_df, test_df = processing_data(raw_df)
 
-y_data = train_df['Survived']
-attribute = train_df['Embarked']
 
-new_df = train_df[['Survived', 'Embarked']]
+nominal_df = train_df[['Pclass', 'Sex', 'Embarked', 'Survived']]
+nominal_attribute_name = ['Pclass', 'Sex', 'Embarked']
+column_unique_values = {col: nominal_df[col].unique().tolist() for
+                        col in nominal_df.columns}
 
-print(new_df)
-column_unique_values = {col: new_df[col].unique().tolist() for col in new_df.columns}
+numeric_attribute_name = ['Age', 'SibSp', 'Parch', 'Fare']
+numeric_df = train_df[['Age', 'SibSp', 'Parch', 'Fare']]
 
-print(column_unique_values)
-miner = Miner(column_unique_values)
-parties_collection = []
+miner, parties = generation(nominal_attribute_name, numeric_attribute_name, column_unique_values, num_parties)
+split_data(train_df, miner, num_parties)
 
-def generate_parties(num_parties):
-    for id in range(0, num_parties):
-        party_obj = Party(id)
-        miner.parties.append(party_obj)
-        parties_collection.append(party_obj)
+miner.cal_sum_n('Survived')
 
-generate_parties(num_parties)
-split_data(new_df, num_parties, parties_collection)
+miner.cal_sum_c('Embarked', 'Survived')
+miner.cal_p('Embarked', 'Survived')
 
-for party in parties_collection:
-    print(party.calculate_c(column_unique_values, 'Embarked', 'Survived'))
-    print(party.calculate_n(column_unique_values, 'Survived'))
+miner.cal_sum_c('Sex', 'Survived')
+miner.cal_p('Sex', 'Survived')
 
-miner.calculate_sum_c('Embarked', 'Survived')
-miner.calculate_sum_n('Survived')
+miner.cal_sum_c('Pclass', 'Survived')
+miner.cal_p('Pclass', 'Survived')
 
-pri
+
+miner.cal_sum_s('Fare', 'Survived')
+miner.cal_mean('Fare', 'Survived')
+
+miner.cal_sum_s('Age', 'Survived')
+miner.cal_mean('Age', 'Survived')
+
+miner.cal_sum_s('SibSp', 'Survived')
+miner.cal_mean('SibSp', 'Survived')
+
+miner.cal_sum_s('Parch', 'Survived')
+miner.cal_mean('Parch', 'Survived')
+
+miner.cal_sum_v('Fare', 'Survived')
+miner.cal_var('Fare', 'Survived')
+
+miner.cal_sum_v('Age', 'Survived')
+miner.cal_var('Age', 'Survived')
+
+miner.cal_sum_v('SibSp', 'Survived')
+miner.cal_var('SibSp', 'Survived')
+
+miner.cal_sum_v('Parch', 'Survived')
+miner.cal_var('Parch', 'Survived')
+
+print(f"Mean value: {miner.mean_value}")
+print(f"Variance: {miner.var_value}")
+
+x_record = {
+    'Pclass': 2,
+    'Sex': 'female',
+    'Age': 25,
+    'SibSp': 0,
+    'Parch': 1,
+    'Fare': 26,
+    'Embarked': 'S'
+}
+print(miner.prob_class_nominal(x_record, 0))
+print(miner.prob_class_numeric(x_record, 0))
+
+print(miner.predict(x_record, 'Survived'))
