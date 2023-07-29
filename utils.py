@@ -6,10 +6,15 @@ from party import Party
 
 
 # tạo ra miner và các parties
-def generation(nominal_attribute_name, numeric_attribute_name, column_unique_values, num_parties):
-    miner = Miner(nominal_attribute_name, numeric_attribute_name, column_unique_values)
+def generation(class_name, nominal_attribute_name, numeric_attribute_name,
+               class_unique_values, nominal_unique_values,
+               num_parties, curve):
+
+    miner = Miner(class_name, nominal_attribute_name, numeric_attribute_name,
+                  class_unique_values, nominal_unique_values,
+                  curve)
     for id in range(num_parties):
-        miner.parties.append(Party(id))
+        miner.parties.append(Party(id, class_name, class_unique_values, nominal_unique_values, curve))
     return miner, miner.parties
 
 
@@ -46,3 +51,6 @@ def processing_data(data):
     test_df = df[880:889]
 
     return train_df, test_df
+
+
+

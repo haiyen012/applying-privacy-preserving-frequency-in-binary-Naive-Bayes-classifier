@@ -3,59 +3,41 @@ import numpy as np
 from party import Party
 from miner import Miner
 from utils import split_data, generation, processing_data
+import tinyec.ec as ec
+from tinyec import registry
 
+
+curve = registry.get_curve('brainpoolP256r1')
 num_parties = 10
 np.random.seed(10)
+
 raw_df = pd.read_csv('train.csv')
 train_df, test_df = processing_data(raw_df)
 
-
-nominal_df = train_df[['Pclass', 'Sex', 'Embarked', 'Survived']]
+# Category name of columns into class, nominal attribute, numeric attribute
+class_name = 'Survived'
 nominal_attribute_name = ['Pclass', 'Sex', 'Embarked']
-column_unique_values = {col: nominal_df[col].unique().tolist() for
-                        col in nominal_df.columns}
-
 numeric_attribute_name = ['Age', 'SibSp', 'Parch', 'Fare']
-numeric_df = train_df[['Age', 'SibSp', 'Parch', 'Fare']]
 
-miner, parties = generation(nominal_attribute_name, numeric_attribute_name, column_unique_values, num_parties)
+# Create new dataframe for class, nominal attribute, numeric attribute
+class_df = train_df[class_name]
+class_unique_values = class_df.unique()
+
+nominal_df = train_df[nominal_attribute_name]
+nominal_unique_values = {col: nominal_df[col].unique().tolist() for
+                         col in nominal_df.columns}
+
+numeric_df = train_df[numeric_attribute_name]
+
+# Create miner and parties
+miner, parties = generation(class_name, nominal_attribute_name, numeric_attribute_name,
+                            class_unique_values, nominal_unique_values,
+                            num_parties, curve)
 split_data(train_df, miner, num_parties)
 
-miner.cal_sum_n('Survived')
-
-miner.cal_sum_c('Embarked', 'Survived')
-miner.cal_p('Embarked', 'Survived')
-
-miner.cal_sum_c('Sex', 'Survived')
-miner.cal_p('Sex', 'Survived')
-
-miner.cal_sum_c('Pclass', 'Survived')
-miner.cal_p('Pclass', 'Survived')
-
-
-miner.cal_sum_s('Fare', 'Survived')
-miner.cal_mean('Fare', 'Survived')
-
-miner.cal_sum_s('Age', 'Survived')
-miner.cal_mean('Age', 'Survived')
-
-miner.cal_sum_s('SibSp', 'Survived')
-miner.cal_mean('SibSp', 'Survived')
-
-miner.cal_sum_s('Parch', 'Survived')
-miner.cal_mean('Parch', 'Survived')
-
-miner.cal_sum_v('Fare', 'Survived')
-miner.cal_var('Fare', 'Survived')
-
-miner.cal_sum_v('Age', 'Survived')
-miner.cal_var('Age', 'Survived')
-
-miner.cal_sum_v('SibSp', 'Survived')
-miner.cal_var('SibSp', 'Survived')
-
-miner.cal_sum_v('Parch', 'Survived')
-miner.cal_var('Parch', 'Survived')
+miner.sum_public_key()
+miner.send_public_key()
+miner.process_train_data()
 
 print(f"Mean value: {miner.mean_value}")
 print(f"Variance: {miner.var_value}")
