@@ -1,5 +1,6 @@
 from scipy.stats import norm
 import numpy as np
+import time
 
 
 class Miner:
@@ -55,7 +56,6 @@ class Miner:
     def process_train_data(self):
         self.cal_sum_n()
         for attribute_name in self.nominal_attribute_name:
-            self.cal_sum_c(attribute_name)
             self.cal_p(attribute_name)
 
         for attribute_name in self.numeric_attribute_name:
@@ -64,10 +64,20 @@ class Miner:
 
     # For both
     def cal_sum_n(self):
+        print(f"[INFO] Miner calculates sum of n")
         self.n = None
+        party_n_list = []
 
+        start_time = time.process_time()
         for party in self.parties:
             party_n = party.calculate_n()
+            party_n_list.append(party_n)
+        end_time = time.process_time()
+        print(f"Time for all users encrypt is: {end_time - start_time}")
+
+        print(f"DECRYPTION MESSAGE")
+        start_time = time.process_time()
+        for party_n in party_n_list:
             if self.n is None:
                 self.n = party_n.copy()
             else:
@@ -76,15 +86,30 @@ class Miner:
 
         for class_value in self.class_unique_values:
             self.n[class_value] = self.find_sum_value(self.n[class_value])
+        end_time = time.process_time()
+        print(f"Time for miner decrypt is: {end_time - start_time}")
+        print('-' * 100)
 
         print(self.n)
         return self.n
 
     # For nominal attributes
     def cal_sum_c(self, attribute_name):
+        print(f"[INFO] Miner calculates sum of c for {attribute_name}")
         c = None
+        party_c_list = []
+
+        start_time = time.process_time()
         for party in self.parties:  # nhét giao thức PPFC vào đây
             party_c = party.calculate_c(attribute_name)
+            party_c_list.append(party_c)
+
+        end_time = time.process_time()
+        print(f"Time for all users encrypt {attribute_name} is: {end_time - start_time}")
+
+        print(f"DECRYPTION MESSAGE")
+        start_time = time.process_time()
+        for party_c in party_c_list:
             if c is None:
                 c = party_c.copy()
             else:
@@ -95,11 +120,17 @@ class Miner:
             for class_value in self.class_unique_values:
                 c[(attribute_value, class_value)] = self.find_sum_value(c[(attribute_value, class_value)])
 
+        end_time = time.process_time()
+        print(f"Time for miner decrypt {attribute_name} is: {end_time - start_time}")
+        print('-' * 100)
+        print()
+
         return c
 
     def cal_p(self, attribute_name):
         c = self.cal_sum_c(attribute_name)
         temp_p = {}
+
         for key_c, value_c in c.items():
             for key_n, value_n in self.n.items():
                 if key_c[1] == key_n:
@@ -140,22 +171,33 @@ class Miner:
         print(f"[INFO] Miner calculates sum of s for {attribute_name}")
 
         s = None
+        party_s_list = []
+        start_time = time.process_time()
         for party in self.parties:  # nhét giao thức PPFC vào đây
             party_s = party.calculate_s(attribute_name)
+            party_s_list.append(party_s)
+        end_time = time.process_time()
+
+        print(f"Time for all users encrypt {attribute_name} is: {end_time - start_time}")
+
+        print(f"DECRYPTION MESSAGE")
+        start_time = time.process_time()
+        for party_s in party_s_list:
             if s is None:
                 s = party_s.copy()
             else:
                 for key, value in party_s.items():
                     s[key][0] = s[key][0] + value[0]
                     s[key][1] = s[key][1] + value[1]
-        # print(s)
-        print(f"DECRYPTION MESSAGE")
+
         for class_value in self.class_unique_values:
             frac_decrypt = self.find_sum_value(s[class_value][0])
             whole_decrypt = self.find_sum_value(s[class_value][1])
             s[class_value] = frac_decrypt / 100 + whole_decrypt
             print(s[class_value])
 
+        end_time = time.process_time()
+        print(f"Time for miner decrypt {attribute_name} is: {end_time-start_time}")
         print('-'*100)
         print()
         return s
@@ -173,10 +215,18 @@ class Miner:
     def cal_sum_v(self, attribute_name):
         print(f"[INFO] Miner calculates sum of v for {attribute_name}")
         v = None
+        party_v_list = []
 
+        start_time = time.process_time()
         for party in self.parties:  # nhét giao thức PPFC vào đây
             party_v = party.calculate_v(attribute_name, self.mean_value[attribute_name])
+            party_v_list.append(party_v)
+        end_time = time.process_time()
+        print(f"Time for all users encrypt {attribute_name} is: {end_time - start_time}")
 
+        print(f"DECRYPTION MESSAGE")
+        start_time = time.process_time()
+        for party_v in party_v_list:
             if v is None:
                 v = party_v.copy()
             else:
@@ -184,13 +234,13 @@ class Miner:
                     v[key][0] = v[key][0] + value[0]
                     v[key][1] = v[key][1] + value[1]
 
-        print(f"DECRYPTION MESSAGE")
         for class_value in self.class_unique_values:
             frac_decrypt = self.find_sum_value(v[class_value][0])
             whole_decrypt = self.find_sum_value(v[class_value][1])
             v[class_value] = frac_decrypt / 100 + whole_decrypt
             print(v[class_value])
-
+        end_time = time.process_time()
+        print(f"Time for miner decrypt {attribute_name} is: {end_time - start_time}")
         print('-' * 100)
         print()
         return v

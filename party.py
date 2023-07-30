@@ -48,6 +48,7 @@ class Party:
 
     # For both
     def calculate_n(self):
+        print(f"\t\t User {self.id} ENCRYPTION MESSAGE")
         n = {}
         for class_value in self.class_unique_values:
             temp_df = self.data[(self.data[self.class_name] == class_value)]
@@ -58,6 +59,7 @@ class Party:
 
     # Nominal Attributes
     def calculate_c(self, attribute_name):
+        print(f"\t\t User {self.id} ENCRYPTION MESSAGE")
         c = {}
 
         for attribute_value in self.nominal_unique_values[attribute_name]:
@@ -71,23 +73,21 @@ class Party:
 
     # Numeric Attributes
     def calculate_s(self, attribute_name):
-        print(f"Client {self.id}")
-        print(f"ENCRYPTION MESSAGE")
+        print(f"\t\t User {self.id} ENCRYPTION MESSAGE")
         s = {}
         for class_value in self.class_unique_values:
             temp_df = self.data[self.data[self.class_name] == class_value]
             temp_sum = np.sum(temp_df[attribute_name].astype(float).values)
 
             frac, whole = math.modf(temp_sum)
-            print(frac, whole)
+            print(f"\t\t\t Message: {frac, whole}")
             frac_encrypted_message = self.encrypt_messages(int(frac * 100))
             whole_encrypted_message = self.encrypt_messages(int(whole))
             s[class_value] = [frac_encrypted_message, whole_encrypted_message]
         return s
 
     def calculate_v(self, attribute_name, attribute_mean):
-        print(f"Client {self.id}")
-        print(f"ENCRYPTION MESSAGE")
+        print(f"\t\t User {self.id} ENCRYPTION MESSAGE")
         v = {}
         for class_value in self.class_unique_values:
             temp_df = self.data[self.data[self.class_name] == class_value]
@@ -96,7 +96,7 @@ class Party:
             res = np.sum(np.square(res))
 
             frac, whole = math.modf(res)
-            print(frac, whole)
+            print(f"\t\t\t Message: {frac, whole}")
             frac_encrypted_message = self.encrypt_messages(int(frac * 100))
             whole_encrypted_message = self.encrypt_messages(int(whole))
             v[class_value] = [frac_encrypted_message, whole_encrypted_message]
